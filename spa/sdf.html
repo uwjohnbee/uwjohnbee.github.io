@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="TASKAR Center for Accessible Technology - Seattle Design Festival">
+        <title>Seattle Design Festival</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            *, *:before, *:after {
+                box-sizing: border-box;
+            }
+            .container {
+                background-color: black;
+            }
+            .chat .chat-history {
+                padding: 30px 30px 20px;
+                border-bottom: 2px solid black;
+            }
+            .chat .chat-history .message-data {
+                margin-bottom: 15px;
+                color: white;
+            }
+            .chat .chat-history .message-data-time {
+                padding-left: 6px;
+            }
+            .chat .chat-history .message-data-name {
+                font-weight: bold;
+            }
+            .chat .chat-history .message {
+                padding: 18px 20px;
+                line-height: 26px;
+                font-size: 16px;
+                border-radius: 5px;
+                margin-bottom: 30px;
+                width: 90%;
+                position: relative;
+                background-color: white;
+            }
+
+            .chat .chat-history .message:after {
+            content: "";
+                position: absolute;
+                top: -15px;
+                left: 20px;
+                border-width: 0 15px 15px;
+                border-style: solid;
+                border-color: white transparent;
+                display: block;
+                width: 0;
+            }
+
+            .chat .chat-message {
+                padding: 30px;
+            }
+
+            .chat .comment {
+                padding-top: 20px;
+                color: black;
+            }
+            file-o, .chat .chat-message .fa-file-image-o {
+                font-size: 16px;
+                color: white;
+                cursor: pointer;
+            }
+
+            .chat-ul li{
+                list-style-type: none;
+            }
+
+            .align-left {
+                text-align: left;
+            }
+
+            .align-right {
+                text-align: right;
+            }
+
+            .float-right {
+                float: right;
+            }
+
+            .clearfix:after {
+                visibility: hidden;
+                display: block;
+                font-size: 0;
+                content: " ";
+                clear: both;
+                height: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div id=“controls”>
+            <button onclick="login()" class="btn btn-primary">Log In</button>
+            <button onclick="start()" class="btn btn-primary">Start</button>
+        </div>
+
+        <div id=“feed” class="container clearfix">
+            <div class="chat">   
+                <div class="chat-history">
+                    <ul class="chat-ul" id="changesetRows">
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            const TDEI_API_URL = 'https://api-stage.tdei.us/api/v1/';
+            const POSM_API_URL = 'https://osm.workspaces-stage.sidewalks.washington.edu/api/0.6/';
+            const MAX_CHANGESETS = 15;
+            const POLL_INTERVAL_SECONDS = 10;
+
+            let accessToken = undefined;
+            let workspaceId = 432;
+            let minCreationTime = '2025-01-01';
+            let changesetsFifo = [];
+
+            async function login() {
+            const username = prompt('TDEI Username');
+            const password = prompt('TDEI Password');
+
+            const response = await fetch(TDEI_API_URL + 'authenticate', {
+                method: 'POST',
+                body: JSON.stringify({ username, password }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                alert('Login failed: ' + response.statusText);
+                return;
+            }
+
+            const body = await response.json();
+            accessToken = body.access_token; // Currently expires in 24 hours
+            }
+
+            async function start() {
+            if (!accessToken) { alert('Please log in first.'); }
+            await refreshChangesets();
+            setInterval(refreshChangesets, POLL_INTERVAL_SECONDS * 1000);
+            }
+
+            async function refreshChangesets() {
+            // Fetch the newest changesets from the POSM. This API returns changesets 
+            // ordered from newest to oldest by default:
+            //
+            const params = `?from=${minCreationTime}&limit=${MAX_CHANGESETS}`;
+            const response = await fetch(POSM_API_URL + 'changesets.json' + params, {
+                headers: {
+                'Authorization': 'Bearer ' + accessToken,
+                'X-Workspace': workspaceId
+                }
+            });
+
+            // if we aren’t able to fetch, start over with the data we do have
+            // how do we deal with auth token expiring?  different response value?
+            if (!response.ok) {
+                return;
+            }
+
+            const newChangesets = (await response.json()).changesets;
+            if (!newChangesets.length) { return; }
+
+            // We'll remember the creation time of the newest changeset so that we can 
+            // constrain our next cycle to include only changesets newer than this:
+            //
+            const newMinCreationTime = new Date(newChangesets[0].created_at);
+            newMinCreationTime.setSeconds(newMinCreationTime.getSeconds() + 1);
+            minCreationTime = newMinCreationTime.toISOString();
+
+            // Next, we'll remove any older changesets that exceed the maximum number 
+            // of changesets that we want to display at one time:
+            //
+            const oldChangesets = changesetsFifo.splice(MAX_CHANGESETS - newChangesets.length);
+            // (We don't do anything with these in this example, but a full implementation
+            // would remove these from the map.)
+
+            // Display any new changesets on the screen...
+            //
+            changesetsFifo = newChangesets.concat(changesetsFifo);
+            window.changesetRows.innerHTML = changesetsFifo.map(formatChangeset).join('');
+            }
+
+            function formatChangeset(changeset) {
+            return `<li><div class="message-data">
+            <span class="message-data-name">${changeset.user}</span> from <b>Seattle</b></span></div>
+            <div class="message">
+            <div><img src="https://tf-cmsv2-smithsonianmag-media.s3.amazonaws.com/filer/30/15/3015dc19-dd2f-430f-8913-4af9b7a99e2c/abbey_road.jpg" class="img-fluid" /></div>
+            <div class="comment">${changeset.tags.comment}</div>
+            </li>`;
+            }
+        </script>
+    </body>
+</html>
