@@ -130,6 +130,8 @@
 
                 const body = await response.json();
                 accessToken = body.access_token; // Currently expires in 24 hours
+
+                start();
             }
 
             async function start() {
@@ -188,9 +190,9 @@
                 </li>`;
             }
 
-            window.onload = function() {
+            document.addEventListener('DOMContentLoaded', function() {
                 login();
-            }
+            });
         </script>
     </body>
 </html>
