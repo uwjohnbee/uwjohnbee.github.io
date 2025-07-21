@@ -12,6 +12,7 @@
             }
             body,
             .container {
+                font-size: 24px;
                 background-color: black;
             }
             .chat .chat-history {
@@ -19,7 +20,7 @@
                 border-bottom: 2px solid black;
             }
             .chat .chat-history .message-data {
-                margin-bottom: 15px;
+                margin-bottom: 22px;
                 color: white;
             }
             .chat .chat-history .message-data-time {
@@ -31,7 +32,6 @@
             .chat .chat-history .message {
                 padding: 18px 20px;
                 line-height: 26px;
-                font-size: 16px;
                 border-radius: 5px;
                 margin-bottom: 30px;
                 width: 90%;
@@ -40,7 +40,7 @@
             }
 
             .chat .chat-history .message:after {
-            content: "";
+                content: "";
                 position: absolute;
                 top: -15px;
                 left: 20px;
@@ -57,10 +57,10 @@
 
             .chat .comment {
                 padding-top: 20px;
+                padding-bottom: 20px;
                 color: black;
             }
             file-o, .chat .chat-message .fa-file-image-o {
-                font-size: 16px;
                 color: white;
                 cursor: pointer;
             }
@@ -183,10 +183,10 @@
 
             function formatChangeset(changeset) {
                 return `<li><div class="message-data">
-                <span class="message-data-name">${changeset.user}</span> from <b>Seattle</b></span></div>
+                <span class="message-data-name">${changeset.user}</span></span></div>
                 <div class="message">
-                <div><img src="https://tf-cmsv2-smithsonianmag-media.s3.amazonaws.com/filer/30/15/3015dc19-dd2f-430f-8913-4af9b7a99e2c/abbey_road.jpg" class="img-fluid" /></div>
                 <div class="comment">${changeset.tags.comment}</div>
+                </div>
                 </li>`;
             }
 
