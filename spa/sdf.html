@@ -122,6 +122,14 @@
             <div class="chat">   
                 <div class="chat-history">
                     <ul class="chat-ul" id="changesetRows">
+                        <li>
+                            <div class="message-data">
+                                <span class="message-data-name">William Langland</span>
+                            </div>
+                            <div class="message">
+                                <div class="comment">Patience is a virtue...</div>
+                            </div>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -251,7 +259,7 @@
 
             function formatChangeset(changeset) {
                 return `<li><div class="message-data">
-                <span class="message-data-name">${changeset.user}</span></span></div>
+                <span class="message-data-name">${changeset.user}</span></div>
                 <div class="message">
                 <div class="comment">${changeset.tags.comment}</div>
                 </div>
