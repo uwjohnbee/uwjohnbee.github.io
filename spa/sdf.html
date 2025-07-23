@@ -13,7 +13,7 @@
             body,
             .container {
                 font-size: 24px;
-                background-color: black;
+                background-color: #330872;
             }
             .chat .chat-history {
                 padding: 30px 30px 20px;
@@ -108,12 +108,14 @@
             const TDEI_API_URL = 'https://api-stage.tdei.us/api/v1/';
             const POSM_API_URL = 'https://osm.workspaces-stage.sidewalks.washington.edu/api/0.6/';
             const MAX_CHANGESETS = 15;
-            const POLL_INTERVAL_SECONDS = 10;
+            const POLL_CHANGESET_SECONDS = 60;
+            const POLL_DISPLAY_MESSAGE_SECONDS = 15;
 
             let accessToken = undefined;
             let workspaceId = 432;
             let minCreationTime = '2025-01-01';
             let changesetsFifo = [];
+            let changesetIndex = 0;
 
             async function login() {
                 const username = prompt('TDEI Username');
@@ -139,7 +141,8 @@
             async function start() {
                 if (!accessToken) { alert('Please log in first.'); }
                 await refreshChangesets();
-                setInterval(refreshChangesets, POLL_INTERVAL_SECONDS * 1000);
+                setInterval(refreshChangesets, POLL_CHANGESET_SECONDS * 1000);
+                //setInterval(displayNextMessage, POLL_DISPLAY_MESSAGE_SECONDS * 1000);
             }
 
             async function refreshChangesets() {
@@ -147,12 +150,20 @@
                 // ordered from newest to oldest by default:
                 //
                 const params = `?from=${minCreationTime}&limit=${MAX_CHANGESETS}`;
-                const response = await fetch(POSM_API_URL + 'changesets.json' + params, {
-                    headers: {
-                    'Authorization': 'Bearer ' + accessToken,
-                    'X-Workspace': workspaceId
-                    }
-                });
+                let response = null;
+
+                try
+                {
+                    response = await fetch(POSM_API_URL + 'changesets.json' + params, {
+                        headers: {
+                        'Authorization': 'Bearer ' + accessToken,
+                        'X-Workspace': workspaceId
+                        }
+                    });
+                }
+                catch (error) {
+                    return;
+                }
 
                 // if we aren’t able to fetch, start over with the data we do have
                 // how do we deal with auth token expiring?  different response value?
@@ -165,7 +176,6 @@
 
                 // We'll remember the creation time of the newest changeset so that we can 
                 // constrain our next cycle to include only changesets newer than this:
-                //
                 const newMinCreationTime = new Date(newChangesets[0].created_at);
                 newMinCreationTime.setSeconds(newMinCreationTime.getSeconds() + 1);
                 minCreationTime = newMinCreationTime.toISOString();
@@ -181,6 +191,26 @@
                 //
                 changesetsFifo = newChangesets.concat(changesetsFifo);
                 window.changesetRows.innerHTML = changesetsFifo.map(formatChangeset).join('');
+            }
+
+            function displayNextMessage() {
+                if (changesetsFifo.length === 0) {
+                    return; // No changesets to display
+                }
+
+                // Get the next changeset to display:
+                const changeset = changesetsFifo[changesetIndex];
+                if (!changeset) {
+                    return; // No more changesets to display
+                }
+
+                // Display the changeset in the chat history:
+                const messageHtml = formatChangeset(changeset);
+                const chatUl = document.getElementById('changesetRows');
+                chatUl.innerHTML += messageHtml;
+
+                // Increment the index for the next message:
+                changesetIndex = (changesetIndex + 1) % changesetsFifo.length;
             }
 
             function formatChangeset(changeset) {
