@@ -16,6 +16,7 @@
                 font-family: 'Open Sans', sans-serif;
                 font-size: 24px;
                 background-color: #330872;
+                overflow-x: hidden;
             }
             .chat .chat-history {
                 padding: 30px 30px 20px;
@@ -92,6 +93,28 @@
                 clear: both;
                 height: 0;
             }
+
+            .move {
+                transform: translateX(-400px);
+                transition: transform .5s ease-in-out;
+            }
+
+            .right {
+                opacity: 0;
+                transform: translateX(100vw);
+                transition: transform 1s ease-in-out;
+                align-items: center;
+            }
+
+            .left {
+                opacity: 1;
+                transform: translateX(0);
+                transition: 
+                    transform .5s ease-in-out, 
+                    opacity .5s linear;
+                display: flex;
+                align-items: center;
+            }
         </style>
     </head>
     <body>
@@ -143,7 +166,7 @@
                 if (!accessToken) { alert('Please log in first.'); }
                 await refreshChangesets();
                 setInterval(refreshChangesets, POLL_CHANGESET_SECONDS * 1000);
-                //setInterval(displayNextMessage, POLL_DISPLAY_MESSAGE_SECONDS * 1000);
+                setInterval(displayNextMessage, POLL_DISPLAY_MESSAGE_SECONDS * 1000);
             }
 
             async function refreshChangesets() {
@@ -191,7 +214,7 @@
                 // Display any new changesets on the screen...
                 //
                 changesetsFifo = newChangesets.concat(changesetsFifo);
-                window.changesetRows.innerHTML = changesetsFifo.map(formatChangeset).join('');
+                //window.changesetRows.innerHTML = changesetsFifo.map(formatChangeset).join('');
             }
 
             function displayNextMessage() {
@@ -208,10 +231,22 @@
                 // Display the changeset in the chat history:
                 const messageHtml = formatChangeset(changeset);
                 const chatUl = document.getElementById('changesetRows');
-                chatUl.innerHTML += messageHtml;
+                chatUl.insertAdjacentHTML('afterbegin', messageHtml);
 
                 // Increment the index for the next message:
                 changesetIndex = (changesetIndex + 1) % changesetsFifo.length;
+            }
+
+            function moveEl(e) {
+                e.target.classList.add('move')
+                setTimeout(()=>{
+                    e.target.classList.remove('move')
+                    e.target.classList.add('right')
+                    e.target.textContent = 'I have been clicked!'
+                }, 1000)
+                setTimeout(()=>{
+                    e.target.classList.add('left')
+                }, 2000)
             }
 
             function formatChangeset(changeset) {
