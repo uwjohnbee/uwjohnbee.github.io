@@ -144,15 +144,18 @@
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-            const TDEI_API_URL = 'https://api-stage.tdei.us/api/v1/';
-            const POSM_API_URL = 'https://osm.workspaces-stage.sidewalks.washington.edu/api/0.6/';
+            const URL_PARAMS = new URLSearchParams(window.location.search);
+            const ENV = URL_PARAMS.get('e') || ''; // default to prod if not passed
+            const WORKSPACE_ID = URL_PARAMS.get('w') || 125; // default to SDF if not passed
+
+            const ENV_URL = (ENV.length > 0) ? '-' + ENV : '';
+            const TDEI_API_URL = `https://api${ENV_URL}.tdei.us/api/v1/`;
+            const POSM_API_URL = `https://osm.workspaces${ENV_URL}.sidewalks.washington.edu/api/0.6/`;
             const MAX_CHANGESETS = 15;
             const POLL_CHANGESET_SECONDS = 120;
             const POLL_DISPLAY_MESSAGE_SECONDS = 30;
-            const urlParams = new URLSearchParams(window.location.search);
-
+            
             let accessToken = undefined;
-            let workspaceId = urlParams.get('w') || 125; // default to SDF if not passed
             let minCreationTime = '2025-01-01';
             let changesetsFifo = [];
             let changesetIndex = 0;
@@ -197,7 +200,7 @@
                     response = await fetch(POSM_API_URL + 'changesets.json' + params, {
                         headers: {
                         'Authorization': 'Bearer ' + accessToken,
-                        'X-Workspace': workspaceId
+                        'X-Workspace': WORKSPACE_ID
                         }
                     });
                 }
