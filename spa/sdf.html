@@ -3,8 +3,8 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description" content="TASKAR Center for Accessible Technology - Seattle Design Festival">
-        <title>Seattle Design Festival</title>
+        <meta name="description" content="TASKAR Center for Accessible Technology - Aviv ScoutRoute Feedback">
+        <title>Aviv ScoutRoute Feedback</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
         <style>
@@ -38,7 +38,7 @@
                 margin-bottom: 30px;
                 width: 90%;
                 position: relative;
-                background-color: white;
+                background-color: #cfe9ea;
             }
 
             .chat .chat-history .message:after {
@@ -48,9 +48,16 @@
                 left: 20px;
                 border-width: 0 15px 15px;
                 border-style: solid;
-                border-color: white transparent;
+                border-color: #cfe9ea transparent;
                 display: block;
                 width: 0;
+            }
+
+            .chat .chat-history .message.alt {
+                background-color: #f3f3db;
+            }
+            .chat .chat-history .message.alt:after {
+                border-color: #f3f3db transparent;
             }
 
             .chat .chat-message {
@@ -142,9 +149,10 @@
             const MAX_CHANGESETS = 15;
             const POLL_CHANGESET_SECONDS = 120;
             const POLL_DISPLAY_MESSAGE_SECONDS = 30;
+            const urlParams = new URLSearchParams(window.location.search);
 
             let accessToken = undefined;
-            let workspaceId = 432;
+            let workspaceId = urlParams.get('w') || 125; // default to SDF if not passed
             let minCreationTime = '2025-01-01';
             let changesetsFifo = [];
             let changesetIndex = 0;
@@ -237,7 +245,7 @@
                 }
 
                 // Display the changeset in the chat history:
-                const messageHtml = formatChangeset(changeset);
+                const messageHtml = formatChangeset(changeset, changesetIndex);
                 const chatUl = document.getElementById('changesetRows');
                 chatUl.insertAdjacentHTML('afterbegin', messageHtml);
 
@@ -257,10 +265,12 @@
                 }, 2000)
             }
 
-            function formatChangeset(changeset) {
+            function formatChangeset(changeset, changesetIndex) {
+                let color = ( changesetIndex % 2 === 0 ) ? ' alt' : '';
+
                 return `<li><div class="message-data">
                 <span class="message-data-name">${changeset.user}</span></div>
-                <div class="message">
+                <div class="message${color}">
                 <div class="comment">${changeset.tags.comment}</div>
                 </div>
                 </li>`;
