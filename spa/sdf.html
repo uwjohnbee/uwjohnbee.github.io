@@ -256,12 +256,29 @@
                 }, 100);
             }
 
+            function generateImageHtmlFromChangeset(changeset) {
+                let result = '';
+
+                const images = changeset.tags["ext:kartaview_url"];
+                if (images && images.length > 0) {
+                    images = images.split(',');
+                    result = images.map(image => {
+                        return `<img src="${image}" class="img-fluid" alt="Comment Image" />`;
+                    }).join('');
+                    result = '<div>' + result + '</div>';
+                }
+
+                return result;
+            }
+
             function formatChangeset(changeset, changesetIndex) {
-                let color = ( changesetIndex % 2 === 0 ) ? ' alt' : '';
+                const color = ( changesetIndex % 2 === 0 ) ? ' alt' : '';
+                const imageHtml = generateImageHtmlFromChangeset(changeset);
 
                 return `<li class="up"><div class="message-data">
                 <span class="message-data-name">${changeset.user}</span></div>
                 <div class="message${color}">
+                ${imageHtml}
                 <div class="comment">${changeset.tags.comment}</div>
                 </div>
                 </li>`;
