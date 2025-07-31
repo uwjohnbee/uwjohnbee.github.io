@@ -259,7 +259,7 @@
             function generateImageHtmlFromChangeset(changeset) {
                 let result = '';
 
-                const images = changeset.tags["ext:kartaview_url"];
+                let images = changeset.tags["ext:kartaview_url"];
                 if (images && images.length > 0) {
                     images = images.split(',');
                     result = images.map(image => {
