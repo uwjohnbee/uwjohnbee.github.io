@@ -6,7 +6,9 @@
         <meta name="description" content="TASKAR Center for Accessible Technology - Aviv ScoutRoute Feedback">
         <title>Aviv ScoutRoute Feedback</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
         <style>
             *, *:before, *:after {
                 box-sizing: border-box;
@@ -112,7 +114,7 @@
             }
 
             strong {
-                font-weight: 900;
+                font-weight: 600;
             }
         </style>
     </head>
@@ -139,16 +141,106 @@
             const URL_PARAMS = new URLSearchParams(window.location.search);
             const ENV = URL_PARAMS.get('e') || ''; // default to prod if not passed
             const WORKSPACE_ID = URL_PARAMS.get('w') || 125; // default to SDF if not passed
+            const TEST_MODE = URL_PARAMS.get('t') || ''; // default to SDF if not passed
 
             const ENV_URL = (ENV.length > 0) ? '-' + ENV : '';
             const TDEI_API_URL = `https://api${ENV_URL}.tdei.us/api/v1/`;
             const POSM_API_URL = `https://osm.workspaces${ENV_URL}.sidewalks.washington.edu/api/0.6/`;
-            const MAX_CHANGESETS = 10;
+            const MAX_CHANGESETS = 30;
             const POLL_CHANGESET_SECONDS = 120;
             const POLL_DISPLAY_MESSAGE_SECONDS = 30;
-            
+
+            const TAG_DICT = {
+                // nodes
+                "ext:intersection_visibility": "an intersection's visibility [location] is [enum].", // of pedestrians, 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
+                "ext:intersection_maintained": "a sidewalk [location] is [not] well-maintained.", // sidewalks, Y/N
+                //"ext:intersection_safety": "", // in your own words, not used?
+                "ext:intersection_accessible": "an intersection [location] is [not] accessible for people with disabilities or mobility aids.", // for people with disabilities or mobility aids, Y/N
+                "ext:intersection_sidewalks_well_maintained": "an intersection's sidewalk [location] is [not] well-maintained and free of obstacles.", // and free of obstacles, Y/N
+                "ext:intersection_visibility_rating": "an intersection's visibility [location] is [enum]", // of pedestrians to drivers, 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
+                "ext:intersection_safe_and_accessible": "an intersection [location] is [not] safe and accessible for people with disabilities or mobility aids.", // for people with disabilities or mobility aids, Y/N
+                //"ext:intersection_safety_description": "", // in your own words, not used?
+                "ext:intersection:well_maintained": "an intersection [location] is [not] well-maintained.", // intersection itself, Y/N
+                "ext:intersection:pictures": "an intersection [location] looks like: [photo]", // ties to ext:kartaview_url
+                "ext:curb:type": "a curb's type [location] is [value].", // flush, raised, ramp
+                "ext:curb:tactile": "a curb [location] is [not] tactile.", // Y/N
+                "ext:ramp:alignment_with_crossing": "a ramp [location] is [value] with the direction of the crossing.", // with the direction of the crossing, aligned / misaligned, not applicable
+                // ways
+                "ext:footway:surface:material": "a footway's surface material [location] is [value].", // concrete / asphalt / brick / other
+                "ext:footway:surface:condition": "a footway's surface condition [location] is [enum].", // 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
+                "ext:footway:disruptions:count": "the number of disruptions over 2 inches on a footway [location] is [value].", // number of disruptions over 2 inches, 0 - 50
+                "ext:sidewalk:obstruction": "a sidewalk [location] does [not] have temporary barriers to access.", // temporary barriers, Y/N
+                "ext:sidewalk:surface:material": "a sidewalk's surface material [location] is [value].", // concrete / asphalt / brick / other
+                "ext:sidewalk:surface:condition": "a sidewalk's surface condition [location] is [enum].", // 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
+                "ext:sidewalk:disruptions:count": "the number of disruptions over 2 inches on a sidewalk [location] is [value].", // number of disruptions over 2 inches, 0 - 50
+                "ext:crosswalk:surface:material": "a crosswalk's surface material [location] is [value].", // concrete / asphalt / brick / other
+                "ext:crosswalk:disruptions:count": "the number of disruptions over 2 inches at a crosswalk [location] is [value].", // number of disruptions over 2 inches, 0 - 50
+                "ext:crosswalk:markings": "a crosswalk [location] does [not] have markings on the roadway.", // markings on the roadway, Y/N
+                "ext:crosswalk:markings:condition": "the condition of the markings [location] is [enum].", // 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
+                "ext:crosswalk:signals": "a crosswalk [location] does [not] have signals for pedestrians.", // for pedestrians, Y/N
+                "ext:crossing:signals:sounds": "a crossing [location] does [not] have an audible indication for when it is safe to cross.", // audible indication for when it is safe to cross, Y/N
+                "ext:crossing:signals:vibration": "a crossing [location] does [not] have vibrating tactile indication for when it is safe to cross.", // vibrating tactile indication for when it is safe to cross, Y/N
+                "ext:crossing:signals:arrows": "a crossing [location] does [not] have a tactile arrow for pedestrians.", // tactile arrow for pedestrians, Y/N
+                "ext:crossing:signals:arrow:alignment": "a crossing [location] is [value] with the direction of travel.", // aligned with the direction of travel, aligned / misaligned
+                "ext:crossing:signals:button": "a crossing [location] does [not] have a push button for pedestrians.", // push button for pedestrians, Y/N
+                "ext:crossing:signals:button:reachable": "a crossing [location] is [not] reachable by people with mobility aids." // reachable by people with mobility aids, Y/N
+            };
+
+            const TEST_XML = [
+            `<?xml version="1.0" encoding="UTF-8"?>
+            <osmChange version="0.6" generator="CGImap 0.10.0.2507212011 (22 788a64db3727)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+                <modify>
+                    <node id="1883150" visible="true" version="2" changeset="1" timestamp="2025-08-06T00:45:14Z" user="Node of Your Business" uid="8">
+                        <nd ref="6768521"/>
+                        <nd ref="6768520"/>
+                        <tag k="ext:intersection_visibility" v="2"/>
+                    </way>
+                </modify>
+            </osmChange>`,
+            `<?xml version="1.0" encoding="UTF-8"?>
+            <osmChange version="0.6" generator="CGImap 0.10.0.2507212011 (22 788a64db3727)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+                <modify>
+                    <way id="1841820" visible="true" version="2" changeset="2" timestamp="2025-08-06T00:45:14Z" user="Ways and Means" uid="8">
+                        <nd ref="6605122"/>
+                        <nd ref="6605121"/>
+                        <tag k="ext:footway:surface:material" v="brick"/>
+                    </way>
+                </modify>
+            </osmChange>`,
+            `<?xml version="1.0" encoding="UTF-8"?>
+            <osmChange version="0.6" generator="CGImap 0.10.0.2507212011 (22 788a64db3727)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+                <modify>
+                    <node id="1883150" visible="true" version="2" changeset="3" timestamp="2025-08-06T00:45:14Z" user="Node of Your Business" uid="8">
+                        <nd ref="6768521"/>
+                        <nd ref="6768520"/>
+                        <tag k="ext:intersection_maintained" v="n"/>
+                    </way>
+                </modify>
+            </osmChange>`,
+            `<?xml version="1.0" encoding="UTF-8"?>
+            <osmChange version="0.6" generator="CGImap 0.10.0.2507212011 (22 788a64db3727)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+                <modify>
+                    <way id="1841820" visible="true" version="2" changeset="4" timestamp="2025-08-06T00:45:14Z" user="Ways and Means" uid="8">
+                        <nd ref="6605122"/>
+                        <nd ref="6605121"/>
+                        <tag k="ext:crossing:signals:vibration" v="y"/>
+                    </way>
+                </modify>
+            </osmChange>`,
+            `<?xml version="1.0" encoding="UTF-8"?>
+            <osmChange version="0.6" generator="CGImap 0.10.0.2507212011 (22 788a64db3727)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+                <modify>
+                    <node id="1883150" visible="true" version="2" changeset="3" timestamp="2025-08-06T00:45:14Z" user="Node of Your Business" uid="8">
+                        <nd ref="6768521"/>
+                        <nd ref="6768520"/>
+                        <tag k=""ext:ramp:alignment_with_crossing" v="misaligned"/>
+                    </way>
+                </modify>
+            </osmChange>`
+            ];
+
             let accessToken = undefined;
-            let minCreationTime = '2025-01-01';
+            let minCreationTime = '2025-08-01';
             let changesetsFifo = [];
             let changesetIndex = 0;
 
@@ -183,7 +275,6 @@
             async function refreshChangesets() {
                 // Fetch the newest changesets from the POSM. This API returns changesets 
                 // ordered from newest to oldest by default:
-                //
                 const params = `?from=${minCreationTime}&limit=${MAX_CHANGESETS}`;
                 let response = null;
 
@@ -225,7 +316,6 @@
                 // Display any new changesets on the screen...
                 //
                 changesetsFifo = newChangesets.concat(changesetsFifo);
-                //window.changesetRows.innerHTML = changesetsFifo.map(formatChangeset).join('');
             }
 
             async function displayNextMessage() {
@@ -268,21 +358,6 @@
                 }, 200);
             }
 
-            function generateImageHtmlFromChangeset(changeset) {
-                let result = '';
-
-                let images = changeset.tags["ext:kartaview_url"];
-                if (images && images.length > 0) {
-                    images = images.split(',');
-                    result = images.map(image => {
-                        return `<img src="${image}" class="img-fluid" alt="Comment Image" />`;
-                    }).join('');
-                    result = '<div>' + result + '</div>';
-                }
-
-                return result;
-            }
-
             async function fetchChangesetXml(changesetId) {
                 try {
                     const response = await fetch(POSM_API_URL + 'changeset/' + changesetId + '/download', {
@@ -294,6 +369,11 @@
 
                     if (!response.ok) {
                         throw new Error(`Failed to fetch changeset ${changesetId}: ${response.statusText}`);
+                    }
+
+                    if (TEST_MODE.length > 0) {
+                        // If we're in test mode, return a random test XML
+                        return TEST_XML[Math.floor(Math.random() * TEST_XML.length)];
                     }
 
                     return await response.text();
@@ -311,28 +391,97 @@
                 return verbs[Math.floor(Math.random() * verbs.length)];
             }
     
-            function xml2text(xml) {
+            function bool2text(value) {
+                if (value === 'N' || value === 'no' || value === 'false' || value === 'n') {
+                    return '<strong>' + 'not' + '</strong>';
+                } else {
+                    return "";
+                }
+            }
+
+            function enum2text(value) {
+                const enumDict = {
+                    "1": "very poor",
+                    "2": "poor",
+                    "3": "fair",
+                    "4": "good",
+                    "5": "excellent"
+                };
+
+                return '<strong>' + enumDict[value] + '</strong>';
+            }
+
+            function photo2text(changeset) {
+                let result = '';
+                let images = changeset.tags["ext:kartaview_url"];
+                if (images && images.length > 0) {
+                    images = images.split(',');
+                    result = images.map(image => {
+                        return `<img src="${image}" class="img-fluid" alt="Changeset Image" />`;
+                    }).join('');
+                    result = '<div>' + result + '</div>';
+                }
+
+                return result;
+            }
+
+            function translateTag2Html(changeset, k, v, lat, lon) {
+                const verb = randomVerb();
+                let result = TAG_DICT[k];
+                
+                if (!result) {
+                    throw new Exception('unsupported tag');
+                }
+
+                // replace placeholders with actual values
+                result = result.replace('[location]', ``); // todo, look up lat long
+                result = result.replace('[value]', '<strong>' + v + '</strong>');
+                result = result.replace('[enum]', enum2text(v));
+                result = result.replace('[not]', bool2text(v));
+                result = result.replace('[photo]', photo2text(changeset));
+
+                return randomVerb() + ' ' + result + '<br /><br />';
+            }
+
+            function xml2text(changeset, xml) {
                 let result = '';
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(xml, "text/xml");
                 const modify_tags = Array.from(doc.getElementsByTagName("modify"));
                 let nodes = [];
                 let ways = [];
+                let nodesways = [];
+                let isQuestXML = false;
 
-                for (var i = 0; i < modify_tags.length; i++) {
-                    nodes = Array.from(modify_tags[i].getElementsByTagName("node"));
+                for (const modify_tag of modify_tags) {
+                    isQuestXML = false;
+                    nodes = Array.from(modify_tag.getElementsByTagName("node"));
+                    // do we need to read ways differently than nodes?
+                    ways = Array.from(modify_tag.getElementsByTagName("way"));
+                    nodesways = nodes.concat(ways);
 
-                    if (nodes.length > 0) {
-                        result += nodes.map(el => {
-                            const tags = Array.from(el.getElementsByTagName("tag"));
-                            const tagText = tags.map(tag => randomVerb() + ` <strong>${tag.getAttribute("k")}</strong> as <strong>${tag.getAttribute("v")}</strong>`).join('<br /><br />');
-                            return tagText;
-                        }).join('') + '<br /><br />';
-                    }
-
-                    //ways = modify_tags[i].getElementsByTagName("way");
+                    for (const item of nodesways) {
+                        const id = item.getAttribute("id");
+                        const lat = item.getAttribute("lat");
+                        const lon = item.getAttribute("lon");
+                        const tags = Array.from(item.getElementsByTagName("tag"));
+                        for (const tag of tags) {
+                            const k = tag.getAttribute("k");
+                            const v = tag.getAttribute("v");
+                            if (k in TAG_DICT) {
+                                isQuestXML = true;
+                                result += translateTag2Html(changeset, k, v, lat, lon);
+                                // We found a tag that we care about
+                                // You can process it as needed
+                            }
+                        }
+                    }            
                 }
 
+                if(!isQuestXML) {
+                    throw new Exception('not a quest changeset!');
+                }
+            
                 // snip the trailing <br /><br /> at the end
                 if (result.length > 0) {
                     result = result.substring(0, result.length - 12);
@@ -343,7 +492,7 @@
 
             async function generateTextFromChangeset(changeset) {
                 const xml = await fetchChangesetXml(changeset.id);
-                let result = xml2text(xml);
+                let result = xml2text(changeset, xml);
 
                 if (result.length === 0) {
                     throw new Exception('empty changeset!');
@@ -414,14 +563,12 @@
 
             async function formatChangeset(changeset, changesetIndex) {
                 const color = ( changesetIndex % 2 === 0 ) ? ' alt' : '';
-                const imageHtml = generateImageHtmlFromChangeset(changeset);
                 const textHtml = await generateTextFromChangeset(changeset);
 
                 return `<li class="up"><div class="message-data">
                 <span class="message-data-name">${changeset.user}</span></div>
                 <div class="message${color}">
                 ${textHtml}
-                ${imageHtml}
                 </div>
                 </li>`;
             }
