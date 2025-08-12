@@ -153,36 +153,36 @@
             const TAG_DICT = {
                 // nodes
                 "ext:intersection:visibility": "an intersection's visibility [location] is [enum].", // of pedestrians, 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
-                "ext:intersection:maintained": "a sidewalk [location] is [not] well-maintained.", // sidewalks, Y/N
+                "ext:intersection:maintained": "a sidewalk [location] [is not] well-maintained.", // sidewalks, Y/N
                 //"ext:intersection_safety": "", // in your own words, not used?
-                "ext:intersection:accessible": "an intersection [location] is [not] accessible for people with disabilities or mobility aids.", // for people with disabilities or mobility aids, Y/N
-                "ext:intersection:sidewalks_well_maintained": "an intersection's sidewalk [location] is [not] well-maintained and free of obstacles.", // and free of obstacles, Y/N
+                "ext:intersection:accessible": "an intersection [location] [is not] accessible for people with disabilities or mobility aids.", // for people with disabilities or mobility aids, Y/N
+                "ext:intersection:sidewalks_well_maintained": "an intersection's sidewalk [location] [is not] well-maintained and free of obstacles.", // and free of obstacles, Y/N
                 "ext:intersection:visibility_rating": "an intersection's visibility [location] is [enum]", // of pedestrians to drivers, 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
-                "ext:intersection:safe_and_accessible": "an intersection [location] is [not] safe and accessible for people with disabilities or mobility aids.", // for people with disabilities or mobility aids, Y/N
+                "ext:intersection:safe_and_accessible": "an intersection [location] [is not] safe and accessible for people with disabilities or mobility aids.", // for people with disabilities or mobility aids, Y/N
                 //"ext:intersection_safety_description": "", // in your own words, not used?
-                "ext:intersection:well_maintained": "an intersection [location] is [not] well-maintained.", // intersection itself, Y/N
+                "ext:intersection:well_maintained": "an intersection [location] [is not] well-maintained.", // intersection itself, Y/N
                 "ext:intersection:picture": "an intersection [location] looks like: [photo]", // ties to ext:kartaview_url
                 "kerb": "a curb's type [location] is [value].", // flush, raised, ramp
-                "tactile_paving": "a curb [location] is [not] tactile.", // Y/N
+                "tactile_paving": "a curb [location] [is not] tactile.", // Y/N
                 "ext:ramp:alignment_with_crossing": "a ramp [location] is [value] with the direction of the crossing.", // with the direction of the crossing, aligned / misaligned
                 // ways
                 "surface": "a sidewalk's surface material [location] is [value].", // concrete / asphalt / brick / other
                 "ext:footway:surface:condition": "a footway's surface condition [location] is [enum].", // 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
                 "ext:footway:disruptions:count": "the number of disruptions over 2 inches on a footway [location] is [value].", // number of disruptions over 2 inches, 0 - 50
-                "ext:sidewalk:obstruction": "a sidewalk [location] does [not] have temporary barriers to access.", // temporary barriers, Y/N
+                "ext:sidewalk:obstruction": "a sidewalk [location] [does not] have temporary barriers to access.", // temporary barriers, Y/N
                 "ext:sidewalk:surface:condition": "a sidewalk's surface condition [location] is [enum].", // 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
                 "ext:sidewalk:disruptions:count": "the number of disruptions over 2 inches on a sidewalk [location] is [value].", // number of disruptions over 2 inches, 0 - 50
                 "ext:crossing:surface:material": "a crosswalk's surface material [location] is [value].", // concrete / asphalt / brick / other
                 "ext:crossing:disruptions:count": "the number of disruptions over 2 inches at a crosswalk [location] is [value].", // number of disruptions over 2 inches, 0 - 50
-                "crossing:markings": "a crosswalk [location] does [not] have markings on the roadway.", // markings on the roadway, Y/N
+                "crossing:markings": "a crosswalk [location] [does not] have markings on the roadway.", // markings on the roadway, Y/N
                 "ext:crossing:markings:condition": "the condition of the markings [location] is [enum].", // 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
-                "ext:crossing:signals": "a crosswalk [location] does [not] have signals for pedestrians.", // for pedestrians, Y/N
-                "ext:crossing:signals:sounds": "a crossing [location] does [not] have an audible indication for when it is safe to cross.", // audible indication for when it is safe to cross, Y/N
-                "ext:crossing:signals:vibration": "a crossing [location] does [not] have vibrating tactile indication for when it is safe to cross.", // vibrating tactile indication for when it is safe to cross, Y/N
-                "ext:crossing:signals:arrows": "a crossing [location] does [not] have a tactile arrow for pedestrians.", // tactile arrow for pedestrians, Y/N
+                "ext:crossing:signals": "a crosswalk [location] [does not] have signals for pedestrians.", // for pedestrians, Y/N
+                "ext:crossing:signals:sounds": "a crossing [location] [does not] have an audible indication for when it is safe to cross.", // audible indication for when it is safe to cross, Y/N
+                "ext:crossing:signals:vibration": "a crossing [location] [does not] have vibrating tactile indication for when it is safe to cross.", // vibrating tactile indication for when it is safe to cross, Y/N
+                "ext:crossing:signals:arrows": "a crossing [location] [does not] have a tactile arrow for pedestrians.", // tactile arrow for pedestrians, Y/N
                 "ext:crossing:signals:arrow:alignment": "a crossing [location] is [value] with the direction of travel.", // aligned with the direction of travel, aligned / misaligned
-                "ext:crossing:signals:button": "a crossing [location] does [not] have a push button for pedestrians.", // push button for pedestrians, Y/N
-                "ext:crossing:signals:button:reachable": "a crossing [location] is [not] reachable by people with mobility aids." // reachable by people with mobility aids, Y/N
+                "ext:crossing:signals:button": "a crossing [location] [does not] have a push button for pedestrians.", // push button for pedestrians, Y/N
+                "ext:crossing:signals:button:reachable": "a crossing [location] [is not] reachable by people with mobility aids." // reachable by people with mobility aids, Y/N
             };
 
             const TEST_XML = [
@@ -444,6 +444,14 @@
                 }
             }
 
+            function dynabool2text(word, value) {
+                if (value === 'N' || value === 'no' || value === 'false' || value === 'n') {
+                    return word + ' <strong>' + 'not' + '</strong>';
+                } else {
+                    return '<strong>' + word + '</strong>';
+                }
+            }
+
             function enum2text(value) {
                 const enumDict = {
                     "1": "very poor",
@@ -483,6 +491,8 @@
                 result = result.replace('[value]', '<strong>' + v + '</strong>');
                 result = result.replace('[enum]', enum2text(v));
                 result = result.replace('[not]', bool2text(v));
+                result = result.replace('[does not]', dynabool2text('does', v));
+                result = result.replace('[is not]', dynabool2text('is', v));
                 result = result.replace('[photo]', photo2text(changeset));
 
                 return randomVerb() + ' ' + result + '<br /><br />';
@@ -499,7 +509,6 @@
                 let isQuestXML = false;
 
                 for (const modify_tag of modify_tags) {
-                    isQuestXML = false;
                     nodes = Array.from(modify_tag.getElementsByTagName("node"));
                     // do we need to read ways differently than nodes?
                     ways = Array.from(modify_tag.getElementsByTagName("way"));
