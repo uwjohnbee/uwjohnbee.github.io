@@ -153,62 +153,62 @@
             const TAG_DICT = {
                 // 1. Nodes
                 //      A. Intersections
-                "ext:intersection:well_maintained": "the intersection [location] [is not] well-maintained.",
+                "ext:intersection:well_maintained": "that the intersection [location] [is not] well-maintained.",
                 //          No | Yes
-                "ext:intersection:visibility_rating": "the intersection's visibility of pedestrians to drivers [location] is [enum].",
+                "ext:intersection:visibility_rating": "that the intersection's visibility of pedestrians to drivers [location] is [enum].",
                 //          1 = Very Poor | 2 = Poor | 3 = Fair | 4 = Good | 5 = Excellent
-                "ext:intersection:safe_and_accessible": "the intersection [location] [is not] safe and accessible for people with disabilities or mobility aids.",
+                "ext:intersection:safe_and_accessible": "that the intersection [location] [is not] safe and accessible for people with disabilities or mobility aids.",
                 //          No | Yes
-                "ext:intersection:picture": "an intersection [location] looks like: [photo]", 
+                "ext:intersection:picture": "that the intersection [location] looks like: [photo]", 
                 //          No | Yes, ties to ext:kartaview_url
                 //      B. Curbs
-                "kerb": "a curb's type [location] is [value].",
+                "kerb": "that a curb's type [location] is [value].",
                 //          Raised | Ramp | Flush
-                "tactile_paving": "a curb [location] [does not] have tactile paving.",
+                "tactile_paving": "that a curb [location] [does not] have tactile paving.",
                 //          No | Yes
-                "ext:ramp:alignment_with_crossing": "a ramp [location] is [value] with the direction of the crossing.",
+                "ext:ramp:alignment_with_crossing": "that a ramp [location] is [value] with the direction of the crossing.",
                 //          Misaligned | Aligned
                 // 2. Ways
                 //      A. Footways
-                "surface": "a footway's surface material [location] is [value].",
+                "surface": "that a footway's surface material [location] is [value].",
                 //          Concrete | Asphalt | Brick
-                "ext:footway:surface:condition": "a footway's surface condition [location] is [enum].",
+                "ext:footway:surface:condition": "that a footway's surface condition [location] is [enum].",
                 //          1 = Very Poor | 2 = Poor | 3 = Fair | 4 = Good | 5 = Excellent
-                "ext:footway:disruptions:count": "the number of disruptions over 2 inches on a footway [location] is [value].",
+                "ext:footway:disruptions:count": "that the number of disruptions over 2 inches on a footway [location] is [value].",
                 //          0 - 50
                 //      B. Sidewalks
-                "ext:sidewalk:obstruction": "a sidewalk [location] [does not] have temporary obstructions.", 
+                "ext:sidewalk:obstruction": "that a sidewalk [location] [does not] have temporary obstructions.", 
                 //          No | Yes
-                "surface": "a sidewalk's surface material [location] is [value].",
+                "surface": "that a sidewalk's surface material [location] is [value].",
                 //          Concrete | Asphalt | Brick
-                "ext:sidewalk:surface:condition": "a sidewalk's surface condition [location] is [enum].",
+                "ext:sidewalk:surface:condition": "that a sidewalk's surface condition [location] is [enum].",
                 //          1 = Very Poor | 2 = Poor | 3 = Fair | 4 = Good | 5 = Excellent
-                "ext:sidewalk:disruptions:count": "the number of disruptions over 2 inches on a sidewalk [location] is [value].",
+                "ext:sidewalk:disruptions:count": "that the number of disruptions over 2 inches on a sidewalk [location] is [value].",
                 //          0 - 50
                 //      C. Crossings
-                "surface": "a crossing's surface material [location] is [value].",
+                "surface": "that a crosswalk's surface material [location] is [value].",
                 //          Concrete | Asphalt | Brick
-                "ext:crossing:surface:condition": "a crossing's surface condition [location] is [enum].",
+                "ext:crossing:surface:condition": "that a crosswalk's surface condition [location] is [enum].",
                 //          1 = Very Poor | 2 = Poor | 3 = Fair | 4 = Good | 5 = Excellent
-                "ext:crossing:disruptions:count": "the number of disruptions over 2 inches at a crosswalk [location] is [value].",
+                "ext:crossing:disruptions:count": "that the number of disruptions over 2 inches at a crosswalk [location] is [value].",
                 //          0 - 50
-                "crossing:markings": "a crosswalk [location] [does not] have markings on the roadway.",
+                "crossing:markings": "that a crosswalk [location] [does not] have markings on the roadway.",
                 //          No | Yes
-                "ext:crossing:markings:condition": "the condition of the markings [location] is [enum].",
+                "ext:crossing:markings:condition": "that the condition of the markings [location] is [enum].",
                 //          1 = Very Poor | 2 = Poor | 3 = Fair | 4 = Good | 5 = Excellent
-                "ext:crossing:signals": "a crosswalk [location] [does not] have signals for pedestrians.",
+                "ext:crossing:signals": "that a crosswalk [location] [does not] have signals for pedestrians.",
                 //          No | Yes
-                "ext:crossing:signals:button": "a crossing [location] [does not] have a push button for pedestrians.",
+                "ext:crossing:signals:button": "that a crosswalk [location] [does not] have a push button for pedestrians.",
                 //          No | Yes
-                "ext:crossing:signals:sound": "a crossing [location] [does not] have an audible indication for when it is safe to cross.",
+                "ext:crossing:signals:sound": "that a crosswalk [location] [does not] have an audible indication for when it is safe to cross.",
                 //          No | Yes
-                "ext:crossing:signals:vibration": "a crossing [location] [does not] have a vibrating tactile indication for when it is safe to cross.",
+                "ext:crossing:signals:vibration": "that a crosswalk [location] [does not] have a vibrating tactile indication for when it is safe to cross.",
                 //          No | Yes
-                "ext:crossing:signals:arrow": "a crossing [location] [does not] have a tactile arrow for pedestrians.",
+                "ext:crossing:signals:arrow": "that a crosswalk [location] [does not] have a tactile arrow for pedestrians.",
                 //          No | Yes
-                "ext:crossing:signals:arrow:alignment": "a crossing [location] is [value] with the direction of travel.",
+                "ext:crossing:signals:arrow:alignment": "that a crosswalk [location] is [value] with the direction of travel.",
                 //          Misaligned | Aligned
-                "ext:crossing:signals:button:reachable": "a crossing [location] [is not] reachable by people with mobility aids."
+                "ext:crossing:signals:button:reachable": "that a crosswalk [location] [is not] reachable by people with mobility aids."
                 //          No | Yes
             };
 
