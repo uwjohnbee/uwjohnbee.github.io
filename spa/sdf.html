@@ -141,7 +141,7 @@
             const URL_PARAMS = new URLSearchParams(window.location.search);
             const ENV = URL_PARAMS.get('e') || ''; // default to prod if not passed
             const WORKSPACE_ID = URL_PARAMS.get('w') || 125; // default to SDF if not passed
-            const TEST_MODE = URL_PARAMS.get('t') || ''; // default to SDF if not passed
+            const TEST_MODE = URL_PARAMS.get('t') || ''; // default to live mode
 
             const ENV_URL = (ENV.length > 0) ? '-' + ENV : '';
             const TDEI_API_URL = `https://api${ENV_URL}.tdei.us/api/v1/`;
@@ -152,32 +152,31 @@
 
             const TAG_DICT = {
                 // nodes
-                "ext:intersection_visibility": "an intersection's visibility [location] is [enum].", // of pedestrians, 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
-                "ext:intersection_maintained": "a sidewalk [location] is [not] well-maintained.", // sidewalks, Y/N
+                "ext:intersection:visibility": "an intersection's visibility [location] is [enum].", // of pedestrians, 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
+                "ext:intersection:maintained": "a sidewalk [location] is [not] well-maintained.", // sidewalks, Y/N
                 //"ext:intersection_safety": "", // in your own words, not used?
-                "ext:intersection_accessible": "an intersection [location] is [not] accessible for people with disabilities or mobility aids.", // for people with disabilities or mobility aids, Y/N
-                "ext:intersection_sidewalks_well_maintained": "an intersection's sidewalk [location] is [not] well-maintained and free of obstacles.", // and free of obstacles, Y/N
-                "ext:intersection_visibility_rating": "an intersection's visibility [location] is [enum]", // of pedestrians to drivers, 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
-                "ext:intersection_safe_and_accessible": "an intersection [location] is [not] safe and accessible for people with disabilities or mobility aids.", // for people with disabilities or mobility aids, Y/N
+                "ext:intersection:accessible": "an intersection [location] is [not] accessible for people with disabilities or mobility aids.", // for people with disabilities or mobility aids, Y/N
+                "ext:intersection:sidewalks_well_maintained": "an intersection's sidewalk [location] is [not] well-maintained and free of obstacles.", // and free of obstacles, Y/N
+                "ext:intersection:visibility_rating": "an intersection's visibility [location] is [enum]", // of pedestrians to drivers, 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
+                "ext:intersection:safe_and_accessible": "an intersection [location] is [not] safe and accessible for people with disabilities or mobility aids.", // for people with disabilities or mobility aids, Y/N
                 //"ext:intersection_safety_description": "", // in your own words, not used?
                 "ext:intersection:well_maintained": "an intersection [location] is [not] well-maintained.", // intersection itself, Y/N
-                "ext:intersection:pictures": "an intersection [location] looks like: [photo]", // ties to ext:kartaview_url
-                "ext:curb:type": "a curb's type [location] is [value].", // flush, raised, ramp
-                "ext:curb:tactile": "a curb [location] is [not] tactile.", // Y/N
-                "ext:ramp:alignment_with_crossing": "a ramp [location] is [value] with the direction of the crossing.", // with the direction of the crossing, aligned / misaligned, not applicable
+                "ext:intersection:picture": "an intersection [location] looks like: [photo]", // ties to ext:kartaview_url
+                "kerb": "a curb's type [location] is [value].", // flush, raised, ramp
+                "tactile_paving": "a curb [location] is [not] tactile.", // Y/N
+                "ext:ramp:alignment_with_crossing": "a ramp [location] is [value] with the direction of the crossing.", // with the direction of the crossing, aligned / misaligned
                 // ways
-                "ext:footway:surface:material": "a footway's surface material [location] is [value].", // concrete / asphalt / brick / other
+                "surface": "a sidewalk's surface material [location] is [value].", // concrete / asphalt / brick / other
                 "ext:footway:surface:condition": "a footway's surface condition [location] is [enum].", // 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
                 "ext:footway:disruptions:count": "the number of disruptions over 2 inches on a footway [location] is [value].", // number of disruptions over 2 inches, 0 - 50
                 "ext:sidewalk:obstruction": "a sidewalk [location] does [not] have temporary barriers to access.", // temporary barriers, Y/N
-                "ext:sidewalk:surface:material": "a sidewalk's surface material [location] is [value].", // concrete / asphalt / brick / other
                 "ext:sidewalk:surface:condition": "a sidewalk's surface condition [location] is [enum].", // 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
                 "ext:sidewalk:disruptions:count": "the number of disruptions over 2 inches on a sidewalk [location] is [value].", // number of disruptions over 2 inches, 0 - 50
-                "ext:crosswalk:surface:material": "a crosswalk's surface material [location] is [value].", // concrete / asphalt / brick / other
-                "ext:crosswalk:disruptions:count": "the number of disruptions over 2 inches at a crosswalk [location] is [value].", // number of disruptions over 2 inches, 0 - 50
-                "ext:crosswalk:markings": "a crosswalk [location] does [not] have markings on the roadway.", // markings on the roadway, Y/N
-                "ext:crosswalk:markings:condition": "the condition of the markings [location] is [enum].", // 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
-                "ext:crosswalk:signals": "a crosswalk [location] does [not] have signals for pedestrians.", // for pedestrians, Y/N
+                "ext:crossing:surface:material": "a crosswalk's surface material [location] is [value].", // concrete / asphalt / brick / other
+                "ext:crossing:disruptions:count": "the number of disruptions over 2 inches at a crosswalk [location] is [value].", // number of disruptions over 2 inches, 0 - 50
+                "crossing:markings": "a crosswalk [location] does [not] have markings on the roadway.", // markings on the roadway, Y/N
+                "ext:crossing:markings:condition": "the condition of the markings [location] is [enum].", // 1 = Very Poor / 2 = Poor / 3 = Fair / 4 = Good / 5 = Excellent
+                "ext:crossing:signals": "a crosswalk [location] does [not] have signals for pedestrians.", // for pedestrians, Y/N
                 "ext:crossing:signals:sounds": "a crossing [location] does [not] have an audible indication for when it is safe to cross.", // audible indication for when it is safe to cross, Y/N
                 "ext:crossing:signals:vibration": "a crossing [location] does [not] have vibrating tactile indication for when it is safe to cross.", // vibrating tactile indication for when it is safe to cross, Y/N
                 "ext:crossing:signals:arrows": "a crossing [location] does [not] have a tactile arrow for pedestrians.", // tactile arrow for pedestrians, Y/N
@@ -193,7 +192,7 @@
                     <node id="1883150" visible="true" version="2" changeset="1" timestamp="2025-08-06T00:45:14Z" user="Node of Your Business" uid="8" lat="47.6259971" lon="-122.3384143">
                         <nd ref="6768521"/>
                         <nd ref="6768520"/>
-                        <tag k="ext:intersection_visibility" v="2"/>
+                        <tag k="ext:intersection:visibility" v="2"/>
                     </way>
                 </modify>
             </osmChange>`,
@@ -203,7 +202,7 @@
                     <way id="1841820" visible="true" version="2" changeset="2" timestamp="2025-08-06T00:45:14Z" user="Ways and Means" uid="8">
                         <nd ref="6605122"/>
                         <nd ref="6605121"/>
-                        <tag k="ext:footway:surface:material" v="brick"/>
+                        <tag k="surface" v="brick"/>
                     </way>
                 </modify>
             </osmChange>`,
@@ -213,7 +212,7 @@
                     <node id="1883150" visible="true" version="2" changeset="3" timestamp="2025-08-06T00:45:14Z" user="Node of Your Business" uid="8" lat="47.6259971" lon="-122.3384143">
                         <nd ref="6768521"/>
                         <nd ref="6768520"/>
-                        <tag k="ext:intersection_maintained" v="n"/>
+                        <tag k="ext:intersection:maintained" v="n"/>
                     </way>
                 </modify>
             </osmChange>`,
@@ -241,7 +240,7 @@
 
             let accessToken = undefined;
             let apikey = undefined;
-            let minCreationTime = '2025-08-01';
+            let minCreationTime = '2025-08-12';
             let changesetsFifo = [];
             let changesetIndex = 0;
 
@@ -342,14 +341,14 @@
                     // Skip this changeset and move to the next one
                     console.log(error.message);
                     if (changesetIndex >= changesetsFifo.length - 1) {
-                        console.log('reached end of changesets, starting over');
+                        console.log('reached end of changesets, waiting for refresh');
                         changesetIndex = 0;
+                        return;
                     }
                     else {
                         changesetIndex++;
+                        await displayNextMessage();
                     }
-
-                    await displayNextMessage();
                 }
 
                 const chatUl = document.getElementById('changesetRows');
@@ -418,6 +417,7 @@
 
                     if (TEST_MODE.length > 0) {
                         // If we're in test mode, return a random test XML
+                        console.log('in test mode, returning random test XML');
                         return TEST_XML[Math.floor(Math.random() * TEST_XML.length)];
                     }
 
@@ -475,7 +475,7 @@
                 let result = TAG_DICT[k];
                 
                 if (!result) {
-                    throw new Error('unsupported tag');
+                    throw new Error('unsupported tag ' + k + ' in changeset ' + changeset.id);
                 }
 
                 // replace placeholders with actual values
@@ -526,7 +526,7 @@
                 }
 
                 if(!isQuestXML) {
-                    throw new Error('not a quest changeset!');
+                    throw new Error('not a quest changeset ' + changeset.id);
                 }
             
                 // snip the trailing <br /><br /> at the end
