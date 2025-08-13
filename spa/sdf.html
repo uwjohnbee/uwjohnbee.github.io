@@ -112,7 +112,7 @@
                 transition: 
                     transform .8s cubic-bezier(0.175, 0.885, 0.32, 1.1);
             }
-
+                
             strong {
                 font-weight: 600;
             }
@@ -282,118 +282,94 @@
                     headers: { 'Content-Type': 'application/json' }
                 });
 
-                if (!response.ok) {
+                if (! response.ok) {
                     alert('Login failed: ' + response.statusText);
                     return;
                 }
 
                 const body = await response.json();
-                accessToken = body.access_token; // Currently expires in 24 hours
+                
+                // Currently expires in 24 hours
+                if(body)
+                    accessToken = body.access_token;
 
                 start();
             }
 
             async function start() {
-                if (!accessToken) { alert('Please log in first.'); }
-                await refreshChangesets();
+                if (!accessToken) { alert('Please log in first.'); return; }
+
                 setInterval(refreshChangesets, POLL_CHANGESET_SECONDS * 1000);
                 setInterval(displayNextMessage, POLL_DISPLAY_MESSAGE_SECONDS * 1000);
+
+                await refreshChangesets();
+                displayNextMessage();
             }
 
             async function refreshChangesets() {
                 // Fetch the newest changesets from the POSM. This API returns changesets 
                 // ordered from newest to oldest by default:
                 const params = `?from=${minCreationTime}&limit=${MAX_CHANGESETS}`;
-                let response = null;
 
-                try
-                {
+                let response = null;
+                try {
                     response = await fetch(POSM_API_URL + 'changesets.json' + params, {
                         headers: {
                         'Authorization': 'Bearer ' + accessToken,
                         'X-Workspace': WORKSPACE_ID
                         }
                     });
-                }
-                catch (error) {
-                    return;
-                }
-
-                // if we aren’t able to fetch, start over with the data we do have
-                // how do we deal with auth token expiring?  different response value?
-                if (!response.ok) {
+                } catch (error) {
+                    console.log(error);
                     return;
                 }
 
                 const newChangesets = (await response.json()).changesets;
-                if (!newChangesets.length) { return; }
+                if (!newChangesets.length) {                 
+                    console.log("No changesets found");
+                    return; 
+                }
 
                 // We'll remember the creation time of the newest changeset so that we can 
                 // constrain our next cycle to include only changesets newer than this:
                 const newMinCreationTime = new Date(newChangesets[0].created_at);
+
                 newMinCreationTime.setSeconds(newMinCreationTime.getSeconds() + 1);
                 minCreationTime = newMinCreationTime.toISOString();
 
-                // Next, we'll remove any older changesets that exceed the maximum number 
-                // of changesets that we want to display at one time:
-                //
                 const oldChangesets = changesetsFifo.splice(MAX_CHANGESETS - newChangesets.length);
-                // (We don't do anything with these in this example, but a full implementation
-                // would remove these from the map.)
 
-                // Display any new changesets on the screen...
-                //
                 changesetsFifo = newChangesets.concat(changesetsFifo);
             }
 
             async function displayNextMessage() {
                 if (changesetsFifo.length === 0) {
-                    console.log('no changesets to display');
-                    return; // No changesets to display
+                    console.log('No changesets');
+                    return; 
                 }
 
-                // Get the next changeset to display:
                 const changeset = changesetsFifo[changesetIndex];
-                if (!changeset) {
-                    console.log('index out of bounds for changesets, starting over');
-                    changesetIndex = 0;
-                    await displayNextMessage();
-                }
 
-                let messageHtml = '';
-                // Display the changeset in the chat history:
-                try {
-                    messageHtml = await formatChangeset(changeset, changesetIndex);
-                } catch (error) {
-                    // Skip this changeset and move to the next one
-                    console.log(error.message);
-                    if (changesetIndex >= changesetsFifo.length - 1) {
-                        console.log('reached end of changesets, waiting for refresh');
-                        changesetIndex = 0;
-                        return;
-                    }
-                    else {
-                        changesetIndex++;
-                        await displayNextMessage();
-                    }
-                }
+                const messageHtml = await formatChangeset(changeset);
 
                 const chatUl = document.getElementById('changesetRows');
                 chatUl.insertAdjacentHTML('afterbegin', messageHtml);
-
-                let el = document.querySelector("li");
-                if (el) {
-                    setAnimation(el);
-                }
+                setAnimation();
 
                 // Increment the index for the next message:
-                changesetIndex = (changesetIndex + 1) % changesetsFifo.length;
+                changesetIndex++;
+                
+                if(changesetIndex > changesetsFifo.length - 1)
+                    changesetIndex = 0;
             }
 
-            function setAnimation(el) {
+            function setAnimation() {
                 setTimeout(()=>{
-                    el.classList.remove('up');
-                    el.classList.add('down');
+                    let els = document.querySelectorAll(".chat-ul li.up");
+                    for(const el of els) {
+                        el.classList.remove('up');
+                        el.classList.add('down');                        
+                    }
                 }, 200);
             }
 
@@ -430,6 +406,12 @@
             }
 
             async function fetchChangesetXml(changesetId) {
+                if (TEST_MODE.length > 0) {
+                    // If we're in test mode, return a random test XML
+                    console.log('in test mode, returning random test XML');
+                    return TEST_XML[Math.floor(Math.random() * TEST_XML.length)];
+                }
+
                 try {
                     const response = await fetch(POSM_API_URL + 'changeset/' + changesetId + '/download', {
                         headers: {
@@ -441,22 +423,15 @@
                     if (!response.ok) {
                         throw new Error(`failed to fetch changeset ${changesetId}: ${response.statusText}`);
                     }
-
-                    if (TEST_MODE.length > 0) {
-                        // If we're in test mode, return a random test XML
-                        console.log('in test mode, returning random test XML');
-                        return TEST_XML[Math.floor(Math.random() * TEST_XML.length)];
-                    }
-
+                    
                     return await response.text();
                 } catch (error) {
-                    console.log(error);
+                    console.log("Error fetching changeset: " + error);
                     return null;
                 }
             }
 
-            function randomVerb()
-            {
+            function randomVerb() {
                 const verbs = [
                     "identified", "found", "distinguished", "pinpointed", "determined", "recognized", "observed", "noted", "discovered", "detected", "marked", "tagged", "labeled", "classified", "categorized", "specified", "defined", "designated", "indicated", "signaled", "reported", "documented", "recorded", "logged", "registered"
                 ];
@@ -522,138 +497,64 @@
                 result = result.replace('[is not]', dynabool2text('is', v));
                 result = result.replace('[photo]', photo2text(changeset));
 
-                return randomVerb() + ' ' + result + '<br /><br />';
+                return randomVerb() + ' ' + result;
             }
 
             async function xml2text(changeset, xml) {
                 let result = '';
+
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(xml, "text/xml");
                 const modify_tags = Array.from(doc.getElementsByTagName("modify"));
-                let nodes = [];
-                let ways = [];
-                let nodesways = [];
-                let isQuestXML = false;
 
+                // create a map of unique tags and the values we need to make text for each
+                var uniqueKV = {};
                 for (const modify_tag of modify_tags) {
-                    nodes = Array.from(modify_tag.getElementsByTagName("node"));
-                    // do we need to read ways differently than nodes?
-                    ways = Array.from(modify_tag.getElementsByTagName("way"));
-                    nodesways = nodes.concat(ways);
+                    const nodes = Array.from(modify_tag.getElementsByTagName("node"));
+                    const ways = Array.from(modify_tag.getElementsByTagName("way"));
+                    const nodesways = nodes.concat(ways);
 
                     for (const item of nodesways) {
-                        //alert(new XMLSerializer().serializeToString(item));
                         const id = item.getAttribute("id");
                         const lat = item.getAttribute("lat");
                         const lon = item.getAttribute("lon");
-                        //console.log('id: ' + id + ', lat: ' + lat + ', lon: ' + lon + ' from ' + new XMLSerializer().serializeToString(item));
+
                         const tags = Array.from(item.getElementsByTagName("tag"));
                         for (const tag of tags) {
                             const k = tag.getAttribute("k");
                             const v = tag.getAttribute("v");
+
                             if (k in TAG_DICT) {
-                                isQuestXML = true;
-                                result += await translateTag2Html(changeset, k, v, lat, lon);
-                                // We found a tag that we care about
-                                // You can process it as needed
+                                uniqueKV[k] = { k, v, lat, lon};
                             }
                         }
-                    }            
+                    }          
                 }
 
-                if(!isQuestXML) {
-                    throw new Error('not a quest changeset ' + changeset.id);
-                }
-            
-                // snip the trailing <br /><br /> at the end
-                if (result.length > 0) {
-                    result = result.substring(0, result.length - 12);
+                // now turn that map of unique tags into text snippets:
+                for(const change of Object.values(uniqueKV)) {
+                    const color = ( Math.random() % 2 == 0 ) ? ' alt' : '';
+                    const snippet = await translateTag2Html(changeset, change.k, change.v, change.lat, change.lon);
+
+                    result += `<li class="up">
+                        <div class="message-data">
+                        <span class="message-data-name">${changeset.user}</span></div>
+                    
+                        <div class="message${color}">
+                            <div class="comment">
+                                ${snippet}
+                            </div>
+                        </div>
+                    </li>`;
                 }
 
                 return result;
             }
 
-            async function generateTextFromChangeset(changeset) {
+            // get rid of this
+            async function formatChangeset(changeset) {
                 const xml = await fetchChangesetXml(changeset.id);
-                let result = await xml2text(changeset, xml);
-
-                if (result.length === 0) {
-                    throw new Error('empty changeset!');
-                }
-
-                return '<div class="comment">' + result + '</div>';
-            }
-
-            /**
-            function computeChangesetDifference(xml1, xml2) {
-                const parser = new DOMParser();
-                const doc1 = parser.parseFromString(xml1, "text/xml");
-                const doc2 = parser.parseFromString(xml2, "text/xml");
-
-                const diff = {
-                    added: [],
-                    modified: [],
-                    deleted: []
-                };
-
-                const elements1 = Array.from(doc1.getElementsByTagName("node"));
-                const elements2 = Array.from(doc2.getElementsByTagName("node"));
-
-                const map1 = new Map(elements1.map(el => [el.getAttribute("id"), el]));
-                const map2 = new Map(elements2.map(el => [el.getAttribute("id"), el]));
-
-                // Detect added and modified elements
-                for (const [id, el2] of map2.entries()) {
-                    if (!map1.has(id)) {
-                        diff.added.push(el2);
-                    } else if (el2.getAttribute("version") !== map1.get(id).getAttribute("version")) {
-                        diff.modified.push(el2);
-                    }
-                }
-
-                // Detect deleted elements
-                for (const id of map1.keys()) {
-                    if (!map2.has(id)) {
-                        diff.deleted.push(map1.get(id));
-                    }
-                }
-
-                return diff;
-            }
-
-            async function compareChangesets(changesetId1, changesetId2) {
-                const xml1 = await fetchChangesetXml(changesetId1);
-                const xml2 = await fetchChangesetXml(changesetId2);
-
-                if (!xml1 || !xml2) {
-                    alert("Failed to fetch one or both changesets.");
-                    return;
-                }
-
-                const diff = computeChangesetDifference(xml1, xml2);
-
-                console.log("Added nodes:", diff.added);
-                console.log("Modified nodes:", diff.modified);
-                console.log("Deleted nodes:", diff.deleted);
-
-                alert(`Comparison complete:
-                - Added: ${diff.added.length}
-                - Modified: ${diff.modified.length}
-                - Deleted: ${diff.deleted.length}`);
-            }
-
-            **/
-
-            async function formatChangeset(changeset, changesetIndex) {
-                const color = ( changesetIndex % 2 === 0 ) ? ' alt' : '';
-                const textHtml = await generateTextFromChangeset(changeset);
-
-                return `<li class="up"><div class="message-data">
-                <span class="message-data-name">${changeset.user}</span></div>
-                <div class="message${color}">
-                ${textHtml}
-                </div>
-                </li>`;
+                return await xml2text(changeset, xml);
             }
 
             document.addEventListener('DOMContentLoaded', function() {
