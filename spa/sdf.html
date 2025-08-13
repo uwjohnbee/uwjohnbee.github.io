@@ -373,7 +373,7 @@
                 }, 200);
             }
 
-            async function latLong2LocationName(lat, lon) {
+            async function latLong2LocationName(lat, lon, useIntersectionName) {
                 // we don't want to error on an issue, just don't show the street
                 if (!apikey || apikey.length === 0) {
                     console.log('no API key provided for reverse geocoding.');
@@ -397,7 +397,8 @@
                         return '';
                     }
 
-                    return 'at ' + data.addresses[0].address.streetName || '';
+                    const locationName = useIntersectionName ? data.addresses[0].address.streetName : data.addresses[0].address.street;
+                    return 'at ' + locationName || '';
                 }
                 catch (error) {
                     console.log('unable to reverse geocode.');
@@ -470,7 +471,7 @@
 
             function randomVerb() {
                 const verbs = [
-                    "identified", "found", "distinguished", "pinpointed", "determined", "recognized", "observed", "noted", "discovered", "detected", "marked", "tagged", "labeled", "classified", "categorized", "specified", "defined", "designated", "indicated", "signaled", "reported", "documented", "recorded", "logged", "registered"
+                    "identified", "found", "distinguished", "pinpointed", "determined", "recognized", "observed", "noted", "discovered", "detected", "marked", "tagged", "labeled", "classified", "categorized", "specified", "designated", "indicated", "signaled", "reported", "documented", "recorded", "logged", "registered"
                 ];
                 return verbs[Math.floor(Math.random() * verbs.length)];
             }
@@ -517,7 +518,7 @@
                 return result;
             }
 
-            async function translateTag2Html(changeset, k, v, lat, lon) {
+            async function translateTag2Html(changeset, k, v, lat, lon, useIntersectionName) {
                 const verb = randomVerb();
                 let result = TAG_DICT[k];
                 
@@ -526,7 +527,7 @@
                 }
 
                 // replace placeholders with actual values
-                result = result.replace('[location]', await latLong2LocationName(lat, lon));
+                result = result.replace('[location]', await latLong2LocationName(lat, lon, useIntersectionName));
                 result = result.replace('[value]', '<strong>' + v + '</strong>');
                 result = result.replace('[enum]', enum2text(v));
                 result = result.replace('[not]', bool2text(v));
@@ -552,6 +553,7 @@
                         const id = node.getAttribute("id");
                         const lat = node.getAttribute("lat");
                         const lon = node.getAttribute("lon");
+                        const useIntersectionName = true;
 
                         const tags = Array.from(node.getElementsByTagName("tag"));
                         for (const tag of tags) {
@@ -559,7 +561,7 @@
                             const v = tag.getAttribute("v");
 
                             if (k in TAG_DICT) {
-                                uniqueKV[k] = { k, v, lat, lon };
+                                uniqueKV[k] = { k, v, lat, lon, useIntersectionName };
                             }
                         }
                     }
@@ -571,6 +573,7 @@
 
                         let lat = null;
                         let lon = null;
+                        const useIntersectionName = false;
                         if (latlong) {
                             lat = latlong["lat"];
                             lon = latlong["lon"];
@@ -582,7 +585,7 @@
                             const v = tag.getAttribute("v");
 
                             if (k in TAG_DICT) {
-                                uniqueKV[k] = { k, v, lat, lon };
+                                uniqueKV[k] = { k, v, lat, lon, useIntersectionName };
                             }
                         }
                     }          
@@ -591,7 +594,7 @@
                 // now turn that map of unique tags into text snippets:
                 for(const change of Object.values(uniqueKV)) {
                     const color = ( changeset.id % 2 == 0 ) ? ' alt' : '';
-                    const snippet = await translateTag2Html(changeset, change.k, change.v, change.lat, change.lon);
+                    const snippet = await translateTag2Html(changeset, change.k, change.v, change.lat, change.lon, change.useIntersectionName);
 
                     result += `<li class="up">
                         <div class="message-data">
