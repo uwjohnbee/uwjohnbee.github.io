@@ -431,6 +431,43 @@
                 }
             }
 
+            async function fetchWaysLatLong(waysId) {
+                try {
+                    const waysResponse = await fetch(POSM_API_URL + 'ways.json?ways=' + waysId, {
+                        headers: {
+                            'Authorization': 'Bearer ' + accessToken,
+                            'X-Workspace': WORKSPACE_ID
+                        }
+                    });
+
+                    if (!waysResponse.ok) {
+                        throw new Error(`failed to fetch ways ${waysId}: ${waysResponse.statusText}`);
+                    }
+                    
+                    const waysJson = await waysResponse.json();
+                    const nodes = waysJson.elements[0].nodes;
+                    const nodesResponse = await fetch(POSM_API_URL + 'nodes.json?nodes=' + nodes[0], {
+                        headers: {
+                            'Authorization': 'Bearer ' + accessToken,
+                            'X-Workspace': WORKSPACE_ID
+                        }
+                    });
+
+                    if (!nodesResponse.ok) {
+                        throw new Error(`failed to fetch node: ${nodesResponse.statusText}`);
+                    }
+
+                    const nodesJson = await nodesResponse.json();
+                    return {
+                        lat: nodesJson.elements[0].lat,
+                        lon: nodesJson.elements[0].lon
+                    };
+                } catch (error) {
+                    console.log("Error fetching ways details: " + error);
+                    return null;
+                }
+            }
+
             function randomVerb() {
                 const verbs = [
                     "identified", "found", "distinguished", "pinpointed", "determined", "recognized", "observed", "noted", "discovered", "detected", "marked", "tagged", "labeled", "classified", "categorized", "specified", "defined", "designated", "indicated", "signaled", "reported", "documented", "recorded", "logged", "registered"
@@ -511,21 +548,41 @@
                 var uniqueKV = {};
                 for (const modify_tag of modify_tags) {
                     const nodes = Array.from(modify_tag.getElementsByTagName("node"));
-                    const ways = Array.from(modify_tag.getElementsByTagName("way"));
-                    const nodesways = nodes.concat(ways);
+                    for (const node of nodes) {
+                        const id = node.getAttribute("id");
+                        const lat = node.getAttribute("lat");
+                        const lon = node.getAttribute("lon");
 
-                    for (const item of nodesways) {
-                        const id = item.getAttribute("id");
-                        const lat = item.getAttribute("lat");
-                        const lon = item.getAttribute("lon");
-
-                        const tags = Array.from(item.getElementsByTagName("tag"));
+                        const tags = Array.from(node.getElementsByTagName("tag"));
                         for (const tag of tags) {
                             const k = tag.getAttribute("k");
                             const v = tag.getAttribute("v");
 
                             if (k in TAG_DICT) {
-                                uniqueKV[k] = { k, v, lat, lon};
+                                uniqueKV[k] = { k, v, lat, lon };
+                            }
+                        }
+                    }
+
+                    const ways = Array.from(modify_tag.getElementsByTagName("way"));
+                    for (const way of ways) {
+                        const id = way.getAttribute("id");
+                        const latlong = await fetchWaysLatLong(id);
+
+                        let lat = null;
+                        let lon = null;
+                        if (latlong) {
+                            lat = latlong["lat"];
+                            lon = latlong["lon"];
+                        }
+
+                        const tags = Array.from(way.getElementsByTagName("tag"));
+                        for (const tag of tags) {
+                            const k = tag.getAttribute("k");
+                            const v = tag.getAttribute("v");
+
+                            if (k in TAG_DICT) {
+                                uniqueKV[k] = { k, v, lat, lon };
                             }
                         }
                     }          
