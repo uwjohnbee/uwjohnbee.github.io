@@ -364,13 +364,15 @@
             }
 
             function setAnimation() {
-                setTimeout(()=>{
-                    let els = document.querySelectorAll(".chat-ul li.up");
-                    for(const el of els) {
+                let els = document.querySelectorAll(".chat-ul li.up");
+                let timer = 200;
+                for(const el of els) {
+                    setTimeout(()=>{
                         el.classList.remove('up');
                         el.classList.add('down');                        
-                    }
-                }, 200);
+                    }, timer);
+                    timer += 100;
+                }
             }
 
             async function latLong2LocationName(lat, lon, useIntersectionName) {
