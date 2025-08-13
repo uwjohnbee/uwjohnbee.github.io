@@ -533,7 +533,7 @@
 
                 // now turn that map of unique tags into text snippets:
                 for(const change of Object.values(uniqueKV)) {
-                    const color = ( Math.random() % 2 == 0 ) ? ' alt' : '';
+                    const color = ( changeset.id % 2 == 0 ) ? ' alt' : '';
                     const snippet = await translateTag2Html(changeset, change.k, change.v, change.lat, change.lon);
 
                     result += `<li class="up">
