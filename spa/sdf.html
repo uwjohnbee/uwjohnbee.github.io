@@ -159,7 +159,7 @@
                 //          1 = Very Poor | 2 = Poor | 3 = Fair | 4 = Good | 5 = Excellent
                 "ext:intersection:safe_and_accessible": "that the intersection [location] [is not] safe and accessible for people with disabilities or mobility aids.",
                 //          No | Yes
-                "ext:intersection:picture": "that the intersection [location] looks like: [photo]", 
+                "ext:kartaview_url": "that the intersection [location] looks like: [photo]", 
                 //          No | Yes, ties to ext:kartaview_url
                 //      B. Curbs
                 "kerb": "that a curb's type [location] is [value].",
@@ -506,12 +506,11 @@
                 return '<strong>' + enumDict[value] + '</strong>';
             }
 
-            function photo2text(changeset) {
+            function photo2text(value) {
                 let result = '';
-                let images = changeset.tags["ext:kartaview_url"];
-                if (images && images.length > 0) {
-                    images = images.split(',');
-                    result = images.map(image => {
+                if (value && value.length > 0) {
+                    value = value.split(',');
+                    result = value.map(image => {
                         return `<img src="${image}" class="img-fluid" alt="Changeset Image" />`;
                     }).join('');
                     result = '<div>' + result + '</div>';
@@ -535,7 +534,7 @@
                 result = result.replace('[not]', bool2text(v));
                 result = result.replace('[does not]', dynabool2text('does', v));
                 result = result.replace('[is not]', dynabool2text('is', v));
-                result = result.replace('[photo]', photo2text(changeset));
+                result = result.replace('[photo]', photo2text(v));
 
                 return randomVerb() + ' ' + result;
             }
