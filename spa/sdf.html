@@ -16,7 +16,7 @@
             body,
             .container-fluid {
                 font-family: 'Open Sans', sans-serif;
-                font-size: 24px;
+                font-size: 36px;
                 background-color: #330872;
                 overflow-y: hidden;
             }
@@ -35,7 +35,7 @@
             }
             .chat .chat-history .message {
                 padding: 18px 20px;
-                line-height: 26px;
+                line-height: 40px;
                 border-radius: 5px;
                 margin-bottom: 30px;
                 width: 95%;
@@ -115,6 +115,11 @@
                 
             strong {
                 font-weight: 600;
+            }
+
+            .img-thumbnail {
+                max-height: 500px;
+                margin-top: 20px;
             }
         </style>
     </head>
@@ -511,7 +516,7 @@
                 if (value && value.length > 0) {
                     value = value.split(',');
                     result = value.map(image => {
-                        return `<img src="${image}" class="img-fluid" alt="Changeset Image" />`;
+                        return `<img src="${image}" class="rounded mx-auto d-block img-thumbnail" alt="AVIV ScoutRoute Image" />`;
                     }).join('');
                     result = '<div>' + result + '</div>';
                 }
